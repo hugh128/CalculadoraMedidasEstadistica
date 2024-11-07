@@ -36,7 +36,7 @@ def main(page: ft.Page):
 
     # Inputs para valores y frecuencias
     values_input = ft.TextField(
-        label="Ingrese límites de clase",
+        label="Ingrese límites inferiores de clase",
         width=420,
         hint_text="Ejemplo: 10,20,30,40,50",
         visible=False
@@ -71,10 +71,12 @@ def main(page: ft.Page):
             values_input.visible = True
             frequencies_input.visible = True
             numbers_input.visible = False
+            coeficiente.visible = True
         else:
             values_input.visible = False
             frequencies_input.visible = False
             numbers_input.visible = True
+            coeficiente.visible = False
     
         mean_result.value = "Media: "
         median_result.value = "Mediana: "
@@ -90,6 +92,9 @@ def main(page: ft.Page):
         range_result.value = "Rango: "
         decile_input.value = ""
         percentile_input.value = ""
+        coeficiente.value = "Coeficiente de variación: "
+
+        tab.selected_index = 0
 
         page.update()
 
@@ -112,6 +117,7 @@ def main(page: ft.Page):
     variance_result = ft.Text("Varianza: ")
     std_dev_result = ft.Text("Desviación estándar: ")
     range_result = ft.Text("Rango: ")
+    coeficiente = ft.Text("Coeficiente de variación: ", visible=False)
 
     def calcular_medidas_de_posición(e):
         try:
@@ -119,7 +125,7 @@ def main(page: ft.Page):
                 limites = parse_input(values_input.value)
                 frecuencias = parse_input(frequencies_input.value)
                 
-                if not limites or not frecuencias or len(limites) != len(frecuencias) + 1:
+                if not limites or not frecuencias or len(limites) != len(frecuencias):
                     raise ValueError("Datos inválidos o incompletos")
 
                 # Calcular decil si se ingresó un valor
@@ -252,10 +258,14 @@ def main(page: ft.Page):
                     # Desviación estándar
                     desv_est_p = var_p ** 0.5
                     desv_est_m = var_m ** 0.5
+                    # Coeficiente de variacion
+                    coeficiente_p = coeficiente_variacion(desv_est_p, mean_val)
+                    coeficiente_m = coeficiente_variacion(desv_est_m, mean_val)
                     
                     variance_result.value = f"Varianza (Poblacional): {var_p:.2f}\nVarianza (Muestral): {var_m:.2f}"
                     std_dev_result.value = f"Desviación estándar (Poblacional): {desv_est_p:.2f}\nDesviación estándar (Muestral): {desv_est_m:.2f}"
                     range_result.value = f"Rango: {max(limites) - min(limites):.2f}"
+                    coeficiente.value = f"Coeficiente de variación (Poblacional): {coeficiente_p:.2f}%\nCoeficiente de variación (Muestral): {coeficiente_m:.2f}%"
                 except Exception as e:
                     variance_result.value = "Varianza: Error en el cálculo"
                     std_dev_result.value = "Desviación estándar: Error en el cálculo"
@@ -376,6 +386,7 @@ def main(page: ft.Page):
                             variance_result,
                             std_dev_result,
                             range_result,
+                            coeficiente,
                         ],
                         spacing=20,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
