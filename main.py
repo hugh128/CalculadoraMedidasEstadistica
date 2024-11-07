@@ -66,17 +66,33 @@ def main(page: ft.Page):
         hint_text="Ejemplo: 85",
     )
 
+    # Inputs para coeficiente de variacion
+    media_input = ft.TextField(
+        label="Valor de la media",
+        width=210,
+        hint_text="Ejemplo: 50.5",
+    )
+
+    desviacion_input = ft.TextField(
+        label="Valor de desviacion",
+        width=210,
+        hint_text="Ejemplo: 25.7",
+    )
+
     def update_input_hint(e):
         if data_type_switch.value:
             values_input.visible = True
             frequencies_input.visible = True
             numbers_input.visible = False
             coeficiente.visible = True
+            tab.tabs.append(t_coeficiente_variacion)
         else:
             values_input.visible = False
             frequencies_input.visible = False
             numbers_input.visible = True
             coeficiente.visible = False
+            if t_coeficiente_variacion in tab.tabs:
+                tab.tabs.remove(t_coeficiente_variacion)
     
         mean_result.value = "Media: "
         median_result.value = "Mediana: "
@@ -93,8 +109,9 @@ def main(page: ft.Page):
         decile_input.value = ""
         percentile_input.value = ""
         coeficiente.value = "Coeficiente de variación: "
-
-        tab.selected_index = 0
+        media_input.value = ""
+        desviacion_input.value = ""
+        coeficiente_result.value = "Coeficiente de variación: "
 
         page.update()
 
@@ -118,6 +135,9 @@ def main(page: ft.Page):
     std_dev_result = ft.Text("Desviación estándar: ")
     range_result = ft.Text("Rango: ")
     coeficiente = ft.Text("Coeficiente de variación: ", visible=False)
+
+    # Resultados para coeficiente de variacion
+    coeficiente_result = ft.Text("Coeficiente de variación: ")
 
     def calcular_medidas_de_posición(e):
         try:
@@ -313,13 +333,51 @@ def main(page: ft.Page):
         except Exception as e:
             page.open(ft.SnackBar(content=ft.Text(f"Error: {str(e)}")))
             page.update()
+    
+    def calcular_coeficiente(e):
+        try:
+            if not media_input.value or not desviacion_input.value:
+                    raise ValueError("Ingrese valores para la media y desviacion estandar")
+            
+            try:
+                media_v = float(media_input.value)
+                desviacion_v = float(desviacion_input.value)
+
+                coeficiente_valor = coeficiente_variacion(desviacion_v, media_v)
+                estimacion = ""
+                
+                match coeficiente_valor:
+                    case cv if cv <= 7:
+                        estimacion = "precisas"
+                    case cv if 8 <= cv <= 14:
+                        estimacion = "aceptables"
+                    case cv if 15 <= cv <= 20:
+                        estimacion = "regulares"
+                    case cv if cv > 20:
+                        estimacion = "poco precisas"
+                    case _:
+                        estimacion = "Valor fuera de los rangos esperados"
+
+                coeficiente_result.value = f"Coeficiente de variación: {coeficiente_valor:.2f}%\nLas estimaciones se consideran {estimacion}"
+            except ValueError:
+                coeficiente_result.value = "Error: Ingrese numeros validos"
+        
+            page.update()
+
+        except Exception as e:
+            page.open(ft.SnackBar(content=ft.Text(f"Error: {str(e)}")))
+            page.update()
+
+        page.update()
 
     calculate_button = ft.ElevatedButton("Calcular", on_click=lambda _: calcular_medidas())
     calculate_position_button = ft.ElevatedButton("Calcular Posiciones", on_click=calcular_medidas_de_posición)
+    calcular_coeficiente_button = ft.ElevatedButton("Calcular Coeficiente", on_click=calcular_coeficiente)
 
     tab = ft.Tabs(
         selected_index=0,
         animation_duration=300,
+        indicator_color=ft.colors.GREEN_200,
         tabs=[
             ft.Tab(
                 text="Tendencia Central",
@@ -396,6 +454,30 @@ def main(page: ft.Page):
             ),
         ],
         expand=1,
+    )
+
+    # Pestaña coneficiene de variacion personalizado
+    t_coeficiente_variacion = ft.Tab(
+        text="Coeficiente de Variacion",
+        icon=ft.icons.EQUALIZER,
+        content=ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            media_input,
+                            desviacion_input,
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                    calcular_coeficiente_button,
+                    coeficiente_result,
+                ],
+                spacing=20,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            padding=20,
+        ),
     )
 
     input_container = ft.Container(
