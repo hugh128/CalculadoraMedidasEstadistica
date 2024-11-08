@@ -27,6 +27,23 @@ def main(page: ft.Page):
         except ValueError:
             return []
 
+    def create_validate_input_function(page):
+        """Valida la entrada de datos."""
+        def validate_input(control, e):
+            try:
+                if control.value:
+                    nums = [float(x.strip()) for x in control.value.split(",")]
+                    control.error_text = None
+                else:
+                    control.error_text = None
+            except ValueError:
+                control.error_text = "Ingrese solo números separados por comas"
+            
+            page.update()
+        return validate_input
+    
+    validar_entrada = create_validate_input_function(page)
+
     # Switch para tipo de datos
     data_type_switch = ft.Switch(
         label="Datos Agrupados",
@@ -39,19 +56,23 @@ def main(page: ft.Page):
         label="Ingrese límites inferiores de clase",
         width=420,
         hint_text="Ejemplo: 10,20,30,40,50",
-        visible=False
+        visible=False,
+        on_change=lambda e: validar_entrada(values_input, e)
     )
     frequencies_input = ft.TextField(
         label="Ingrese frecuencias",
         width=420,
         hint_text="Ejemplo: 1,2,3,4,5",
-        visible=False
+        visible=False,
+        on_change=lambda e: validar_entrada(frequencies_input, e)
     )
     numbers_input = ft.TextField(
         label="Ingrese números",
         width=420,
         hint_text="Ejemplo: 1,2,3,4,5",
-        visible=True
+        visible=True,
+        prefix_icon=ft.icons.FORMAT_LIST_NUMBERED,
+        on_change=lambda e: validar_entrada(numbers_input, e)
     )
 
     # Inputs para deciles y percentiles
